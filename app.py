@@ -13,3 +13,5 @@ def calculate_sum(numbers):
 def is_even(number):
     """Check if number is even"""
     return number % 2 == 0
+def multiply(a, b):
+    return a * b
