@@ -1,63 +1,43 @@
-name: CI Validation Pipeline
+name: Continuous Validation Pipeline
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  validate:
+  validation:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - uses: actions/setup-python@v4
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
-    
-    - name: Checkpoint 1 - Build Validation
+        python-version: '3.11'
+
+    - name: Install Dependencies
       run: |
-        echo "========================================="
-        echo "CHECKPOINT 1: BUILD VALIDATION"
-        echo "========================================="
-        python -c "print('Building...')"
-        echo "✅ Build validation PASSED"
-    
-    - name: Checkpoint 2 - Test Validation  
+        pip install -r requirements.txt
+
+    - name: Execute Unit Tests
       run: |
-        echo "========================================="
-        echo "CHECKPOINT 2: TEST VALIDATION"
-        echo "========================================="
-        python -m unittest test_app.py || echo "Tests completed"
-        echo "✅ Test validation PASSED"
-    
-    - name: Checkpoint 3 - Requirements Validation
+        mkdir validation-logs
+        python -m unittest discover > validation-logs/test-results.txt
+
+    - name: Generate Validation Log
       run: |
-        echo "========================================="
-        echo "CHECKPOINT 3: REQUIREMENTS VALIDATION"
-        echo "========================================="
-        echo "REQ-001: Login functionality - VALIDATED"
-        echo "REQ-002: Sum calculation - VALIDATED"
-        echo "REQ-003: Even number check - VALIDATED"
-        echo "✅ Requirements validation PASSED"
-    
-    - name: Generate Validation Evidence
-      run: |
-        echo "========================================" > validation-evidence.txt
-        echo "CONTINUOUS VALIDATION EVIDENCE" >> validation-evidence.txt
-        echo "========================================" >> validation-evidence.txt
-        echo "Date: $(date)" >> validation-evidence.txt
-        echo "Pipeline: CI Validation Pipeline" >> validation-evidence.txt
-        echo "" >> validation-evidence.txt
-        echo "VALIDATION CHECKPOINTS:" >> validation-evidence.txt
-        echo "1. Build Validation: PASSED ✅" >> validation-evidence.txt
-        echo "2. Test Validation: PASSED ✅" >> validation-evidence.txt
-        echo "3. Requirements Validation: PASSED ✅" >> validation-evidence.txt
-        echo "" >> validation-evidence.txt
-        echo "VALIDATION SIGN-OFF: APPROVED" >> validation-evidence.txt
-        echo "========================================" >> validation-evidence.txt
-        cat validation-evidence.txt
-    
-    - name: Upload Validation Evidence
-      uses: actions/upload-artifact@v4    # ← CHANGED FROM v3 TO v4
+        echo "Validation completed successfully" > validation-logs/validation-summary.txt
+        date >> validation-logs/validation-summary.txt
+
+    - name: Upload Validation Artifacts
+      uses: actions/upload-artifact@v4
       with:
         name: validation-evidence
-        path: validation-evidence.txt
+        path: validation-logs/
